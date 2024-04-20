@@ -17,14 +17,16 @@ namespace ImageReceive
     {
 
         private const int PORT = 9051;
-        private UdpClient client;
+        //private UdpClient client;
         private MemoryStream receivedImageStream;
+        private Socket receiverSocket;
+
 
         public Form1()
         {
-            client = new UdpClient(PORT);
             InitializeComponent();
-            
+            receiverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            receiverSocket.Bind(new IPEndPoint(IPAddress.Any, PORT));
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -36,15 +38,17 @@ namespace ImageReceive
         {
             try
             {
-                IPEndPoint senderEP = new IPEndPoint(IPAddress.Any, PORT);
+                IPEndPoint senderEP = new IPEndPoint(IPAddress.Any, 0);
+                EndPoint remoteEP = senderEP;
                 receivedImageStream = new MemoryStream();
 
                 while (true)
                 {
-                    byte[] chunkData = client.Receive(ref senderEP);
-                    receivedImageStream.Write(chunkData, 0, chunkData.Length);
+                    byte[] chunkData = new byte[1024];
+                    int bytesRead = receiverSocket.ReceiveFrom(chunkData, ref remoteEP);
+                    receivedImageStream.Write(chunkData, 0, bytesRead);
 
-                    if (chunkData.Length < 1024)
+                    if (bytesRead < 1024)
                         break;
                 }
 
@@ -54,11 +58,11 @@ namespace ImageReceive
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error receiving image: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("이미지 수신 오류 : " + ex.Message, "에러", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
-
+ 
                 if (receivedImageStream != null)
                     receivedImageStream.Close();
             }

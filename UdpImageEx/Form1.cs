@@ -18,14 +18,15 @@ namespace UdpImageEx
     {
 
         private const int PORT = 9051;
-        private UdpClient client;
         private string imagePath;
-        private const int ChunkSize = 1024; 
+        private const int ChunkSize = 1024;
+        private Socket clientSocket;
 
         public Form1()
         {
             InitializeComponent();
-            client = new UdpClient();
+            clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
         }
 
         private void browseBtn_Click(object sender, EventArgs e)
@@ -55,17 +56,17 @@ namespace UdpImageEx
                         int size = Math.Min(ChunkSize, imageData.Length - offset);
                         byte[] chunkData = new byte[size];
                         Array.Copy(imageData, offset, chunkData, 0, size);
-                        client.Send(chunkData, chunkData.Length, receiverEP);
+                        clientSocket.SendTo(chunkData, receiverEP);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error sending image: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("이미지 전송 오류: " + ex.Message, "에러", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
             {
-                MessageBox.Show("Please load an image first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("먼저 이미지를 불러와주세요.", "에러", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
